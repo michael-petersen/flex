@@ -1,11 +1,85 @@
 import numpy as np
 
-# for the Laguerre polynomials
-from scipy.special import eval_genlaguerre
+import numpy as np
+from numba import njit
 
-class FLEX:
+@njit
+def laguerre_eval(n, alpha, x_vals):
+    result = np.empty(len(x_vals))
+    for i in range(len(x_vals)):
+        x = x_vals[i]
+        if n == 0:
+            result[i] = 1.0
+        elif n == 1:
+            result[i] = 1.0 + alpha - x
+        else:
+            Lnm2 = 1.0
+            Lnm1 = 1.0 + alpha - x
+            for k in range(2, n + 1):
+                L = ((2 * k - 1 + alpha - x) * Lnm1 - (k - 1 + alpha) * Lnm2) / k
+                Lnm2 = Lnm1
+                Lnm1 = L
+            result[i] = Lnm1
+    return result
+
+
+@njit
+def laguerre_eval_one(n, x_vals):
     """
-   FLEX class for calculating Laguerre basis amplitudes.
+    Compute the Laguerre polynomial L_n^1(x) for a single n and multiple
+    x values.
+    
+    Parameters:
+        n (int): Order of the Laguerre polynomial.
+        x_vals (1D array): Input x values.
+    Returns:
+        1D array of Laguerre polynomial values for each x in x_vals.
+     """
+    result = np.empty(len(x_vals))
+    for i in range(len(x_vals)):
+        x = x_vals[i]
+        if n == 0:
+            result[i] = 1.0
+        elif n == 1:
+            result[i] = 2.0 - x
+        else:
+            Lnm2 = 1.0
+            Lnm1 = 2.0 - x
+            for k in range(2, n + 1):
+                L = ((2 * k - x) * Lnm1 - k * Lnm2) / k
+                Lnm2 = Lnm1
+                Lnm1 = L
+            result[i] = Lnm1
+    return result
+
+@njit
+def laguerre_all_orders_one(nmax, x_vals):
+    """
+    Compute L_n^1(x) for all n = 0..nmax and all x in x_vals.
+
+    Parameters:
+        nmax (int): Maximum order n.
+        x_vals (1D array): Input x values.
+
+    Returns:
+        2D array of shape (nmax+1, len(x_vals)) with L_n^1(x).
+    """
+    nx = len(x_vals)
+    result = np.empty((nmax + 1, nx))
+
+    for i in range(nx):
+        x = x_vals[i]
+        result[0, i] = 1.0
+        if nmax >= 1:
+            result[1, i] = 2.0 - x
+        for n in range(2, nmax + 1):
+            result[n, i] = (2 * n - x) * result[n - 1, i]/ n - result[n - 2, i] 
+
+    return result
+
+class FLEXY:
+    """
+    FLEX class for calculating Laguerre basis amplitudes.
 
     This class provides methods for calculating Laguerre basis amplitudes based on Weinberg & Petersen (2021).
 
@@ -38,7 +112,7 @@ class FLEX:
         reconstruction (array-like): Laguerre reconstruction result.
     """
 
-    def __init__(self, rscl, mmax, nmax, R, phi, mass=1., velocity=1.,newaxis=False):
+    def __init__(self, rscl, mmax, nmax, R, phi, mass=1., velocity=1.):
         """
         Initialize the LaguerreAmplitudes instance with parameters.
 
@@ -52,37 +126,17 @@ class FLEX:
             phi (integer or array-like): Angular phi values.
 
         """
-
-        # check for input validity
-        if not isinstance(rscl, (int, float)):
-            raise ValueError("rscl must be a scalar value.")
-        if not isinstance(mmax, int) or mmax < 0:
-            raise ValueError("mmax must be a non-negative integer.")
-        if not isinstance(nmax, int) or nmax < 0:
-            raise ValueError("nmax must be a non-negative integer.")
-        if not isinstance(R, (np.ndarray, list)):
-            raise ValueError("R must be an array-like structure.")
-        if not isinstance(phi, (np.ndarray, list)):
-            raise ValueError("phi must be an array-like structure.")
-        if not isinstance(mass, (int, float, np.ndarray, list)):
-            raise ValueError("mass must be a scalar or array-like structure.")
-        if not isinstance(velocity, (int, float, np.ndarray, list)):
-            raise ValueError("velocity must be a scalar or array-like structure.")
-
-        self.rscl     = rscl
-        self.mmax     = mmax
-        self.nmax     = nmax
-        self.R        = R
-        self.phi      = phi
-        self.mass     = mass
+        self.rscl = rscl
+        self.mmax = mmax
+        self.nmax = nmax
+        self.R = R
+        self.phi = phi
+        self.mass = mass
         self.velocity = velocity
 
+
         # run the amplitude calculation
-        if newaxis:
-            self.laguerre_amplitudes_newaxis()
-        else:
-            # default behaviour 
-            self.laguerre_amplitudes()
+        self.laguerre_amplitudes()
 
     def _gamma_n(self,nrange, rscl):
         """
@@ -97,7 +151,7 @@ class FLEX:
         """
         return (rscl / 2.) * np.sqrt(nrange + 1.)
 
-    def _G_n(self,R, nrange, rscl):
+    def _G_n(self, R, nrange, rscl):
         """
         Calculate the Laguerre basis.
 
@@ -109,7 +163,16 @@ class FLEX:
         Returns:
             array-like: Laguerre basis values.
         """
-        laguerrevalues = np.array([eval_genlaguerre(n, 1, 2 * R / rscl)/self._gamma_n(n, rscl) for n in nrange])
+        R = np.asarray(R)
+        x = 2 * R / rscl
+        gamma_values = np.array([self._gamma_n(n, rscl) for n in nrange])
+
+        # Preallocate output array for speed
+        laguerrevalues = np.empty((len(nrange), len(R)))
+
+        for i, n in enumerate(nrange):
+            laguerrevalues[i] = laguerre_eval_one(n, x) / gamma_values[i]
+
         return np.exp(-R / rscl) * laguerrevalues
 
     def _n_m(self):
@@ -120,10 +183,10 @@ class FLEX:
             array-like: Angular normalisation values.
         """
         deltam0 = np.zeros(self.mmax+1)
-
         deltam0[0] = 1.0
-
+        #return np.power((deltam0 + 1) * np.pi / 2., -0.5)
         return np.power((deltam0 + 1) * np.pi / 2.,-1.)
+        #return np.power(deltam0+1,-1.0)#np.power((deltam0 + 1), -0.5)
 
     def laguerre_amplitudes_newaxis(self):
         """
@@ -190,4 +253,4 @@ class FLEX:
                 fftotal += self.coscoefs[m, n] * np.cos(m * pp) * G_j[n]
                 fftotal += self.sincoefs[m, n] * np.sin(m * pp) * G_j[n]
 
-        self.reconstruction = fftotal * 0.5
+        self.reconstruction = fftotal * 0.5 #/ np.pi
