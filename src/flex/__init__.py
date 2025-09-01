@@ -7,8 +7,9 @@ See README file and online documentation (https://flexable.readthedocs.io)
 for further details and usage instructions.
 """
 from .flexbase import FLEX
-from .flexcompiled import FLEXY
+from .flexnumba import FLEXY
+from .flexcython import FLEXC
 from importlib.metadata import version
 
 __version__ = version("flex")
-__all__ = ["FLEX", "FLEXY"]
+__all__ = ["FLEX", "FLEXY", "FLEXC"]
