@@ -29,3 +29,43 @@ def test_flex_initialization():
     # Test negative mmax
     with pytest.raises(ValueError):
         flex.FLEX(rscl, -1, nmax, R, phi, mass, velocity)
+
+    # Test negative nmax
+    with pytest.raises(ValueError):
+        flex.FLEX(rscl, mmax, -1, R, phi, mass, velocity)
+
+    # Test mismatched R and phi lengths
+    with pytest.raises(ValueError):
+        flex.FLEX(rscl, mmax, nmax, R, phi[:-1], mass, velocity)
+
+    # Test mismatched mass length
+    with pytest.raises(ValueError):
+        flex.FLEX(rscl, mmax, nmax, R, phi, mass[:-1], velocity)
+
+    # Test mismatched velocity length
+    with pytest.raises(ValueError):
+        flex.FLEX(rscl, mmax, nmax, R, phi, mass, velocity[:-1])
+
+def test_flex_version():
+    assert isinstance(flex.__version__, str)
+
+def test_flex_total_power():
+    # Create a FLEX instance
+    rscl = 1.0
+    mmax = 2
+    nmax = 10
+    R = np.linspace(0.1, 5.0, 100)
+    phi = np.linspace(0, 2*np.pi, 100)
+    mass = np.random.uniform(0, 1, 100)
+    velocity = np.random.uniform(0, 100, 100)
+
+    F = flex.FLEX(rscl, mmax, nmax, R, phi, mass, velocity)
+
+    # Compute total power in each harmonic
+    totalm = np.linalg.norm(np.sqrt(F.coscoefs**2 + F.sincoefs**2), axis=1)
+
+    # Check that totalm has the correct shape
+    assert totalm.shape[0] == mmax + 1
+
+    # Check that totalm values are non-negative
+    assert np.all(totalm >= 0)
