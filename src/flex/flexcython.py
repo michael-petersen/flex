@@ -111,7 +111,7 @@ class FLEXC:
         Returns:
             array-like: Laguerre basis values.
         """
-        laguerrevalues = np.array([laguerre_eval(n, 1, 2 * R / rscl)/self._gamma_n(n, rscl) for n in nrange])
+        laguerrevalues = np.array([laguerre_eval(n, 2 * R / rscl)/self._gamma_n(n, rscl) for n in nrange])
         return np.exp(-R / rscl) * laguerrevalues
 
     def _n_m(self):
