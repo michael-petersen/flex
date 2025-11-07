@@ -24,6 +24,8 @@ jobs:
           pip install .
           pip install -r test_requirements.txt
       - name: Test with pytest  
+        env:
+            NUMBA_DISABLE_COVERAGE: "1"
         run: |  
           coverage run -m pytest  -v -s  
 
