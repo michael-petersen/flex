@@ -11,7 +11,7 @@ __ This branch contains experimental compiled versions of flex, which will work 
 
 Installation of `flex` currently proceeds from local builds after cloning this repository:
 ```
-git clone https://github.com/michael-petersen/flex.git
+git clone https://github.com/ObservtionalExpansions/flex.git
 ```
 
 ```
