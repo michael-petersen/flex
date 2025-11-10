@@ -4,7 +4,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/michael-petersen/flex/blob/main/LICENSE)
 
-
+__ This branch contains experimental compiled versions of flex, which will work but are not guaranteed to be faster. __
 
 
 ## Installation
