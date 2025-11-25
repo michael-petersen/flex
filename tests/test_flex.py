@@ -52,9 +52,9 @@ def test_flex_initialization():
     with pytest.raises(ValueError):
         flex.FLEX(rscl, mmax, nmax, R, True, mass, velocity)
     with pytest.raises(ValueError):
-        flex.FLEX(rscl, mmax, nmax, R, phi, True, velocity)
+        flex.FLEX(rscl, mmax, nmax, R, phi, mass='nonsense')
     with pytest.raises(ValueError):
-        flex.FLEX(rscl, mmax, nmax, R, phi, mass, True)
+        flex.FLEX(rscl, mmax, nmax, R, phi, velocity='nonsense')
 
 def test_flex_version():
     assert isinstance(flex.__version__, str)
