@@ -113,7 +113,7 @@ def test_flex_total_normalisation():
 
     F = flex.FLEX(rscl, mmax, nmax, R, phi, mass)
 
-    F.laguerre_reconstruction(R,phi)
+    F.laguerre_reconstruction(R, phi)
 
     # check the values for the norm
     #print(F.reconstruction)
