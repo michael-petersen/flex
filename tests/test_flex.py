@@ -46,8 +46,31 @@ def test_flex_initialization():
     with pytest.raises(ValueError):
         flex.FLEX(rscl, mmax, nmax, R, phi, mass, velocity[:-1])
 
+    # Test nonsense inputs
+    with pytest.raises(ValueError):
+        flex.FLEX(rscl, mmax, nmax, True, phi, mass, velocity)
+    with pytest.raises(ValueError):
+        flex.FLEX(rscl, mmax, nmax, R, True, mass, velocity)
+    with pytest.raises(ValueError):
+        flex.FLEX(rscl, mmax, nmax, R, phi, True, velocity)
+    with pytest.raises(ValueError):
+        flex.FLEX(rscl, mmax, nmax, R, phi, mass, True)
+
 def test_flex_version():
     assert isinstance(flex.__version__, str)
+
+def test_flex_scalars():
+    # Create a FLEX instance
+    rscl = 1.0
+    mmax = 2
+    nmax = 10
+    R = np.linspace(0.1, 5.0, 100)
+    phi = np.linspace(0, 2*np.pi, 100)
+    mass = 1.0
+    velocity = 1.0
+
+    F = flex.FLEX(rscl, mmax, nmax, R, phi, mass, velocity)
+
 
 def test_flex_total_power():
     # Create a FLEX instance
