@@ -59,7 +59,15 @@ def test_flex_total_power():
     mass = np.random.uniform(0, 1, 100)
     velocity = np.random.uniform(0, 100, 100)
 
-    F = flex.FLEX(rscl, mmax, nmax, R, phi, mass, velocity)
+    # test the slower, careful, newaxis version
+    F = flex.FLEX(rscl, mmax, nmax, R, phi, mass, velocity, newaxis=True)
+
+    # test the faster vectorised version
+    G = flex.FLEX(rscl, mmax, nmax, R, phi, mass, velocity)
+
+    # check that both methods give the same coefficients
+    np.testing.assert_allclose(F.coscoefs, G.coscoefs)
+    np.testing.assert_allclose(F.sincoefs, G.sincoefs)
 
     # Compute total power in each harmonic
     totalm = np.linalg.norm(np.sqrt(F.coscoefs**2 + F.sincoefs**2), axis=1)
@@ -69,3 +77,20 @@ def test_flex_total_power():
 
     # Check that totalm values are non-negative
     assert np.all(totalm >= 0)
+
+
+def test_flex_total_normalisation():
+    # Create a FLEX instance
+    rscl = 1.0
+    mmax = 0
+    nmax = 1
+    R = np.linspace(0.1, 5.0, 100)
+    phi = np.linspace(0, 2*np.pi, 100)
+    mass = np.ones(100)
+
+    F = flex.FLEX(rscl, mmax, nmax, R, phi, mass)
+
+    F.laguerre_reconstruction(R,phi)
+
+    # check the values for the norm
+    #print(F.reconstruction)
